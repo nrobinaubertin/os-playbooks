@@ -1,0 +1,143 @@
+- hosts: localhost
+  vars:
+    bin_path: "~/.local/bin"
+    config_path: "~/.config"
+    conan_packages:
+      - fzy
+    user_packages:
+      - ImageMagick
+      - NetworkManager-wifi
+      - ShellCheck
+      - abduco
+      - acpi
+      - alsa-plugins-pulseaudio
+      - alsa-utils
+      - bzip2
+      - cargo  # rust
+      - chromium
+      - clang
+      - dmenu
+      - exfat-utils
+      - feh
+      - ffmpeg
+      - firefox
+      - fontconfig
+      - fontconfig-devel
+      - freetype-devel
+      - fuse
+      - fuse-exfat
+      - gdb
+      - git
+      - git-core
+      - git-extras
+      - grim
+      - htop
+      - libidn-devel
+      - libstdc++-docs
+      - libxcb-devel
+      - make
+      - man-pages
+      - mp3gain
+      - mpv
+      - ncdu
+      - ncurses-devel
+      - net-tools
+      - ntfs-3g
+      - offlineimap
+      - openssl-devel
+      - pciutils
+      - podman-compose
+      - pulseaudio
+      - python3-pip
+      - restic
+      - rsync
+      - ShellCheck  # ale
+      - smartmontools
+      - socat
+      - sqlite
+      - sshpass  # ansible login with password
+      - sway
+      - swaylock
+      - tar
+      - toolbox
+      - unzip
+      - valgrind
+  tasks:
+    - name: Install pip packages
+      pip:
+        name:
+          - PyYAML
+          - aiohttp
+          - ansible
+          - ansible-lint  # ale
+          - autopep8
+          - awscli
+          - beets
+          - cmake
+          - cmake_format  # ale
+          - cmakelint  # ale
+          - conan
+          - docker
+          - docopt
+          - gita
+          - gitlint  # ale
+          - pyacoustid
+          - pygit2
+          - pylint  # ale
+          - pynvim
+          - python-slugify
+          - ranger-fm
+          - requests
+          - speedtest-cli
+          - trash-cli
+          - virtualenv
+          - wikitextparser
+          - yamllint  # ale
+          - yapf  # ale
+        extra_args: --user
+    - name: Update system
+      dnf:
+        name: '*'
+        state: latest
+      become: true
+    - name: Install user utilities
+      dnf:
+        name: "{{ user_packages }}"
+        state: latest
+      become: true
+    - name: Update dotfiles
+      shell:
+        cmd: "cd ~ && curl -Ls 'https://github.com/nrobinaubertin/dotfiles/archive/master.tar.gz' | tar xz --strip 1"
+    - name: Fetch additional apps
+      get_url:
+        url: "{{ item.url }}"
+        dest: "{{ bin_path }}/{{ item.dest }}"
+        mode: 0755
+      with_items:
+        - url: "https://github.com/neovim/neovim/releases/download/v0.4.4/nvim.appimage"
+          dest: "nvim"
+        - url: "https://yt-dl.org/downloads/latest/youtube-dl"
+          dest: "youtube-dl"
+        - url: "https://github.com/keepassxreboot/keepassxc/releases/download/2.6.1/KeePassXC-2.6.1-x86_64.AppImage"
+          dest: "keepassxc"
+    - name: Fetch additional apps
+      unarchive:
+        src: "{{ item }}"
+        dest: "{{ bin_path }}"
+        mode: 0755
+        remote_src: true
+        extra_opts:
+          - --strip-components=1
+      with_items:
+        - "https://github.com/FiloSottile/age/releases/download/v1.0.0-beta2/age-v1.0.0-beta2-linux-amd64.tar.gz"
+        - "https://github.com/syncthing/syncthing/releases/download/v1.10.0/syncthing-linux-amd64-v1.10.0.tar.gz"
+    - name: Install cargo packages
+      command: "cargo install {{ item }}"
+      with_items:
+        - bat
+        - du-dust
+        - exa
+        - fd-find
+        - ripgrep
+        - tokei
+        - rage
